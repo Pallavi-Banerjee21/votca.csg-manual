@@ -1,0 +1,128 @@
+\documentclass[a4paper,10pt]{book}
+
+\usepackage{listings}
+%\usepackage{graphicx}
+\usepackage{color}
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{appendix}
+\usepackage{xspace}
+\usepackage{a4wide}
+%\usepackage{hyperref}
+\usepackage{wrapfig}
+\usepackage[numbers,comma,sort&compress]{natbib}
+\usepackage{graphicx}
+
+\usepackage
+[dvips, %or dvips or pdftex
+pagebackref, %or backref
+colorlinks=true,
+linkcolor=webgreen, %defined below
+filecolor=webbrown, %defined below
+citecolor=webgreen, %defined below
+pdftitle={VOTCA manual},
+pdfauthor={},
+pdfsubject={VOTCA},
+pdfkeywords={coarse-graining boltzmann inversion monte carlo force matching},
+bookmarksopen=false,
+pdfpagemode=None]{hyperref}
+
+\definecolor{webgreen}{rgb}{0,.5,0}
+\definecolor{webbrown}{rgb}{.6,0,0}
+\pdfcompresslevel=9
+
+\renewcommand{\vec}[1]{\ensuremath{{\bm #1}}}
+\newcommand{\fig}[1]{fig.~\ref{#1}}
+\newcommand{\eq}[1]{eq.~\ref{#1}}
+\newcommand{\unit}[1]{\ensuremath{\,\mbox{#1}}}
+\newcommand{\ibi}{IBI\xspace}
+\newcommand{\imc}{IMC\xspace}
+\newcommand{\fm}{FM\xspace}
+\newcommand{\xml}{XML\xspace}
+\newcommand{\gromacs}{GROMACS\xspace}
+\newcommand{\spce}{SPC/E\xspace}
+\newcommand{\grad}{\vec{\nabla}}
+\newcommand{\ddash}{{-}{-}\xspace}
+\newcommand{\csgfmatch}{\textbf{csg\_fmatch}\xspace}
+
+%formating for a program option, e.g. --trj
+\newcommand{\progopt}[1]{\texttt{#1}\xspace}
+% formating for programs, e.g. csg_boltzmann
+\newcommand{\prog}[1]{\textbf{#1}\xspace}
+% formating for an xml option, e.g. cg.inverse.simprog
+\newcommand{\xmlopt}[1]{\textit{#1}\xspace}
+
+% think about what should this do?
+% reference an xml option in the reference
+\newcommand{\refopt}[1]{ref.~\ref{#1}}
+
+
+\newcommand{\sect}[1]{sec.~\ref{#1}}
+
+\newcommand{\votca}{{\sc \color{blue} votca}\xspace}
+\newcommand{\votcaweb}{\htmladdnormallink{{\sc \color{blue} www.votca.org}\xspace}{http://www.votca.org}}
+
+
+\newcommand{\sasha}{ {\sc \color{red} Alexander Lukyanov} \newline}
+\newcommand{\denis}{ {\sc \color{red} Denis Andrienko} \newline}
+\newcommand{\victor}{ {\sc \color{red} Victor R\"uhle} \newline}
+\newcommand{\christoph}{ {\sc \color{red} Christoph Junghans} \newline}
+
+%\usepackage[T1]{fontenc}
+%\usepackage{times}
+\usepackage{type1cm}
+
+
+\begin{document}
+\pagenumbering{roman}
+\begin{titlepage}
+
+\center{\fontsize{4cm}{5cm}\selectfont VOTCA}
+\center{\fontsize{1.5cm}{3cm}\selectfont USER MANUAL}
+
+\vspace*{3cm}
+\center{\includegraphics[width=\columnwidth]{fig/logo}}
+\vspace*{1cm}
+
+\center{\Large{Victor R\"uhle}}
+\center{\Large{Christoph Junghans}}
+\center{\Large{Alexander Lukyanov}}
+\center{\Large{Kurt Kremer}}
+\center{\Large{Denis Andrienko}}
+
+\vspace*{1.5cm}
+\center{\large{\today}}
+
+\vspace*{1cm}
+%\center{
+\large{\copyright \hspace*{0.1cm} VOTCA development team}
+%}
+\vspace*{0.5cm}
+
+\htmladdnormallink{\color{black}\large{www.votca.org}}{http://www.votca.org}
+\end{titlepage}
+
+\newpage 
+\thispagestyle{empty}
+\quad 
+\newpage
+
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+%\quad 
+%\newpage
+
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\include{introduction}
+\include{theory}
+\include{functionality}
+\include{usage}
+\include{reference}
+
+\bibliographystyle{unsrt}
+\bibliography{votca}
+
+\end{document}
