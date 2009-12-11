@@ -1,0 +1,83 @@
+\section{Boltzmann Inversion}
+\begin{figure}
+   \centering
+   \includegraphics{usage/fig/flow_boltzmann.eps}
+   \caption{Flowchart to perform Boltzmann inversion.}
+\end{figure}
+
+Boltzmann inversion is most often performed on a single molecule in vaccuum for deriving bonded interactions while the non-bonded parts are treated via a separate method. VOTCA offers tools to analyse distributions and correlations of such a simulation as well as the preparation of an tabulated potential. Also exclusion lists for the atomistic simulations when the separation ansatz is used (cite Tschoep) can be created automatically. The tool most often used in this section is \prog{csg_boltzmann}. Also mapping from atomistic to coarse-grained level can be perfomred. An important thing to remember if the program \prog{csg_boltzmann} is used is that it parses the whole trajectory and stores all information about bonded interactions in memory to allow interactive analysis. That's why it is not suitable for really big systems with lots of chains. If analysis of a big system is performed, \prog{csg_stat} should be prefered for the analysis. Though it currently offers less features than \prog{csg_boltzmann}, memory problems should not occur.
+
+\subsection{Mapping scheme}
+The first thing to coarse-grain a system is to define a mapping scheme (see \sect{sec:mapping}). The mapping is defined by a simple xml file for each molecule-type. An important step is to verify the mapping scheme by:
+
+\begin{verbatim}
+  csg_map --top topol.tpr --trj traj.trr --cg mapping.xml --out cg.gro
+\end{verbatim}
+
+Make sure that the \xmlopt{ident} tag matches the molecule name in the reference system. The most common thing that can go wrong is that beads cannot be found. On reason is a type in the atom name of the mapping. To debug which atoms are read in from a topology file, \prog{csg_dump} can be used. A second reason could be, that molecules are not identified correctly. In case of a multicomponent system, see \sect{sec:adv_topology} for details.
+
+In case everything works find, a file cg.gro which contains the coarse-grained trajectory is created. The easuiest way to compare coarse-grained and atomistic representation is to open both in e.g. vmd.  Be careful when opening in vmd specifying a .gro file + .trr, the first frame comes from the .gro, the following correspond to the trr. The coarse grained file only contains the frames from the trajectory, to compare them, the first frame of the atomistic run has to be deleted in vmd!!
+
+\subsection{Generating reference trajectories with proper exclusions}
+When the Boltzmann inversion method was described in Ref.\cite{Tschoep:1998}, bonded and non-bonded interactions were treated separately. To do this, a special atomistic trajectory is needed, where all non-bonded interactions are excluded which do not contribute to a bonde interaction in the coarse grained model. Manually this can be a complicated task, however \prog{csg_boltzmann} offers the option \progopt{--excl} to do this automaticaly.
+
+To generate an exclusion list automaticaly, an atomistic topology without exclusions and a mapping scheme has to be prepared first. Since VOTCA can currently only read GROMACS .tpr trajectories and not .top files, running \prog{grompp} is obligatory. Important to note here is, that \prog{csg_boltzmann} currently only creates the exclusion list for the fist mulecule in the topology.
+
+To create the exclusion list, run
+\begin{verbatim}
+  csg_boltzmann --top topol.tpr --cg mapping.xml --excl exclusions.txt
+\end{verbatim}
+This will create a list of exclusions for all interactions that are not within a bonded interaction of the coarse-grained sub-bead. As an example, if the coarse grained molecule is a linear molecule of 3 beads, which are only connected by bonds, \prog{csg_boltzmann} will create exclusions for all non-bonded interactions of atoms from the first bead with atoms of the 3rd bead since they would contribute only to the non-bonded interaction potential which is treated separately.
+
+To add the exclusions to the gromacs topology of the molecule, either include the file specified in --excl as follows
+\begin{verbatim}
+  [ exclusions ]
+  #include "exclusions.txt"
+\end{verbatim}
+or copy and paste the content of that file to the exclusions section.
+
+
+\subsection{Analysis}
+If the \progopt{--trj} option is specified to parse a reference trajectory, \prog{csg_boltzmann} enters an interactive mode which accepts commands. Here, analysis operations can be performed on all interactions evaluated.
+
+\begin{verbatim}
+  csg_boltzmann --top topol.top --trj traj.trr --cg mapping.xml 
+\end{verbatim}
+
+The interactive mode contains a built in \textit{help} command. To get help on a specific command use
+\begin{verbatim}
+  help <command>
+\end{verbatim}
+for example
+\begin{verbatim}
+  help hist
+  help hist set periodic
+\end{verbatim}
+
+All interactions specified in the mapping schem are evaluated. A specific interaction is refered to by a name which is composed of \textit{molecule:interaction-group:index}, where molecule is the molecule number in the whole topology, interaction-group the name specified in the mapping file, and index the entry in the list of this interaction. E.g. \textit{1:AA-bond:10} is the 10th AA-bond in molecule 1. To show a list all interactions that where passed, the command \textit{list} can be used. To specify a couple of interactions during analysis, either give interactions separated by space of use wildcards (e.g. *:AA-bond*).
+
+To quit interactive mode, use command \textit{q}. If analysis commands should be read from a file, use the pipe or stdin redirects from the shell.
+
+\subsubsection{Distribution functions and tabulated potentials}
+Distribution functions (tabulated potentials) can be created with the \textit{hist} (\textit{tab}) command.
+To e.g. write out the distribution function for all interactions of group AA-bond (where AA-bond is the name specified in the mapping scheme) to file AA.txt, type
+\begin{verbatim}
+  hist AA.txt *:AA-bond:*   
+\end{verbatim}
+The command
+\begin{verbatim}
+  hist set
+\end{verbatim}
+prints a list of all parameters than can be changed for the histogram. To directly write the boltzmann inverted potential, the \textit{tab} command can be used. It's usage and options are very similar to the \textit{hist} command. If tabulated potentials are written, special care should be taken to the paramter T (temperature) and scale. The scale command does the volume normalization as given in \eq{eq:boltzmann_norm}. Possible values are \textit{no} (no scaling), \textit{bond} (normalize for bonds) and \textit{angle} (normalize for angles). The e.g. write out the tabulated potential for an angle potential where the temperature was 300K type:
+\begin{verbatim}
+  tab set T 300
+  tab set scale angle
+  tab angle.pot *:angle:*
+\end{verbatim}
+
+\subsubsection{Correlation analysis}
+\prog{csg_boltzmann} offers two posibilities to evaluate correlations of interactions. On thing is the linear correlation coefficient using the command \textit{cor}. However this is not a good measure since it only calculates the linear corelation and often give misleading results~\cite{Ruehle:2009.a}. A better way is to create 2D Histograms. This can be performed by writing out the values (e.g. bond length, angle, dihedral value) using the command \textit{vals}, e.g.:
+\begin{verbatim}
+  vals vals.txt 1:AA-bond:1 1:AAA-angle:A
+\end{verbatim}
+This will create a file which contains 3 columns, the first being the time, the second and third the bond and angle, respectively. Column 2 and 3 can either be used to generate the 2D Histogram, or simpler plot column 3 over 2 with points where the density of points reflect the probability.
