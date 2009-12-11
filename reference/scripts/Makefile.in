@@ -1,0 +1,46 @@
+SHELL=/bin/bash
+DIR:=$(shell pwd | sed 's@^.*/\([^/]*/[^/]*\)$$@\1@' )
+
+.SUFFIXES: .t2t .tex
+.PHONY: clean bootstrap
+.INTERMEDIATE: csg_table.t2t
+
+all: all.tex csg_table.tex 
+	
+all.tex: $(SCRIPTS)
+	echo $(SCRIPTS) | \
+	sed -e 's/\.tex[[:space:]]*/\n/g' | \
+	sed -e '$$d' -e 's@.*@\\input{$(DIR)/&}@' > $@
+
+csg_table.t2t:
+	./call2t2t.sh > $@
+
+%.t2t: 
+	./help2t2t.sh csg_call --direct $* > $@	
+
+.t2t.tex:
+	./txt2tags -t tex --no-header --infile $< --outfile $@
+
+#cleant2t:
+#	rm -f *.t2t
+
+clean: 
+	rm -f $(SCRIPTS) all.tex csg_table.tex
+	rm -f *.tex *~ csg_table.t2t
+	rm -f Makefile
+
+bootstrap: Makefile.in
+	@if ! which csg_call > /dev/null 2>&1; then\
+	  echo csg_call not found;\
+	  exit 1;\
+	fi
+	csg_call -l | \
+	sed -e '1d' \
+	    -e '/\(user\|csg\) table/d' | \
+	awk '{print $$3}' | \
+	sort -u | \
+	sed -e 's/.*/\t&.tex\\/' \
+	    -e '1i SCRIPTS=\\' > Makefile
+	echo >> Makefile
+	cat Makefile.in >> Makefile
+	
