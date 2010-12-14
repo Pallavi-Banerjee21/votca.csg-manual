@@ -1,0 +1,46 @@
+
+
+%!encoding: iso-8859-1
+
+%Anchor stuff
+%%%%%%%%%%%%%%%%%%%%%%%
+
+% for tex
+%we allow label link ref target
+%!postproc(tex): 'label\((.*?)\)' '\label{\1}'
+%!postproc(tex): '(ref|target|link)\((.*?)\)\((.*?)\)' '\hyper\1{\2}{\3}'
+%latex does not allow $ in label name, remove it 3 times
+%!preproc(tex): '(label|ref|target|link)(\([^)]*)\$' '\1\2'
+%!preproc(tex): '(label|ref|target|link)(\([^)]*)\$' '\1\2'
+%!preproc(tex): '(label|ref|target|link)(\([^)]*)\$' '\1\2'
+
+%replace \_ back to _ three times
+%!postproc(tex): '(\\hyperref|\\hypertarget|\\label|\\hyperlink)(\{[^}]*)\\_' '\1\2_'
+%!postproc(tex): '(\\hyperref|\\hypertarget|\\label|\\hyperlink)(\{[^}]*)\\_' '\1\2_'
+%!postproc(tex): '(\\hyperref|\\hypertarget|\\label|\\hyperlink)(\{[^}]*)\\_' '\1\2_'
+
+%hyperref wants [] for 1st argument -> hyperref[]{}
+%!postproc(tex): '(\\hyperref)\{(.*?)\}\{(.*?)\}' '\1[\2]{\3}'
+
+% nicer --
+%!postproc(tex): '--' '{-}{-}'
+
+%For other target is replaced by nothing.
+%!postproc: '(target|link|ref)\(.*?\)\((.*?)\)' '\2'
+%!postproc: 'label\(.*?\)' ''
+
+%Linebreak
+%%%%%%%%%%%%%%%%
+
+%!postproc(tex): '^\s*$' '\n\\noindent '
+
+%!postproc(tex): '\\item' '\item[ ]'
+%!postproc(tex): '^(.*)(\\begin\{itemize\})' '\1\2\n\1\setlength{\itemsep}{0pt}\n\1\setlength{\parskip}{0pt}\n\1\setlength{\parsep}{0pt}'
+
+%wiki stuff
+%%%%%%%%%%%%%%%%%%%
+%!preproc(wiki): '\+\+' '=='
+%!preproc(wiki): '<' 'XXXLTXXX'
+%!preproc(wiki): '>' 'XXXGTXXX'
+%!postproc(wiki): 'XXXLTXXX' '<nowiki><</nowiki>'
+%!postproc(wiki): 'XXXGTXXX' '<nowiki>></nowiki>'
