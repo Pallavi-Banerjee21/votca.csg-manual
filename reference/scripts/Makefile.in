@@ -19,6 +19,10 @@ all.wiki: $(SCRIPTSWIKI)
 csg_table.t2t:
 	./call2t2t.sh > $@
 
+csg_table.tex: csg_table.t2t
+	./txt2tags -t tex --no-header --infile $< --outfile $@
+	sed -i -e 's/{tabular}/{longtable}/' $@
+
 %.t2t: 
 	./help2t2t.sh csg_call --direct $* > $@	
 
