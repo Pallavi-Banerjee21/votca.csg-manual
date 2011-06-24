@@ -1,13 +1,26 @@
 SHELL=/bin/bash
-HGID:=$(shell hg parents -R . --template "{node|short}" | sed 's/.*/\\newcommand{\\hgid}{&}/')
+#the next line is used by the buildutil !
+VER=1.3-dev
+HGID:=$(shell hg parents -R . --template "{node|short}" | sed 's/.*/\\newcommand{\\hgid}{${VER} &}/')
+LATEXMK=scripts/latexmk.pl
+LATEXMKOPTS=-e '$$latex=q/latex --halt-on-error %O %S/'
 
 NAME=manual
 all: $(NAME).pdf
+dvi: $(NAME).dvi
+ps: $(NAME).ps
 
 $(NAME).tex: hgid.tex fig_submake functionality_submake reference_submake usage_submake
 
-%.pdf: %.tex dummy
-	./latexmk.pl -pdfdvi $<
+%.dvi: %.tex dummy
+	@#rm target if latexmk failed, worked better than DELETE_ON_ERROR
+	$(LATEXMK) $(LATEXMKOPTS) -dvi $< || rm -f $@
+	@#rm has exit code 0
+	@[ -f $@ ]
+
+%.pdf: %.dvi
+	dvipdf $< $*_shadow.pdf
+	mv $*_shadow.pdf $@
 
 %_submake:
 	$(MAKE) $(MFLAGS) -C $*
@@ -16,10 +29,10 @@ $(NAME).tex: hgid.tex fig_submake functionality_submake reference_submake usage_
 	$(MAKE) $(MFLAGS) -C $* clean
 
 qclean:
-	./latexmk.pl -C $(NAME).tex
+	$(LATEXMK) -C $(NAME).tex
 
-clean: qclean fig_subclean functionality_subclean reference_subclean usage_submake
-	rm -f $(NAME).fdb_latexmk
+clean: qclean fig_subclean functionality_subclean reference_subclean usage_subclean
+	rm -f $(NAME).fdb_latexmk $(NAME).brf
 	rm -f hgid.tex
 	rm -f *~
 
