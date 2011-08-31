@@ -5,6 +5,8 @@ die () {
   exit 1
 }
 
+#add head node to items
+#e.g. add cg.inverse if cg.inverse.xxx is in items
 add_heads() {
   local i head pattern again="no"
   for i in $items; do
@@ -12,7 +14,7 @@ add_heads() {
     #for main node
     [ "$head" = "$i" ] && continue
     pattern=${head//$/\\$}
-    #if head node is note there
+    #if head node is not there
     if [ -z "$(echo -e "$items" | grep -Ee "$pattern([[:space:]]+|\$)")" ]; then
       items="$(echo -e "$items\n$head")"
       again="yes"
@@ -49,8 +51,8 @@ fi
 [ -z "$(type -p csg_call)" ] && die "${0##*/}: csg_call not found"
 
 xmlfile="$1"
-CSGSHARE="$(csg_call --show-share)"
-[ -f "${CSGSHARE}/xml/$xmlfile" ] || die "${0##*/}: Error, did not find ${CSGSHARE}/xml/$xmlfile"
+VOTCASHARE="$(csg_call --show-share)"
+[ -f "${VOTCASHARE}/xml/$xmlfile" ] || die "${0##*/}: Error, did not find ${VOTCASHARE}/xml/$xmlfile"
 
 trunc=""
 [ "$xmlfile" = "mapping.xml" ] && trunc="mapping."
@@ -64,7 +66,11 @@ echo '%!includeconf: config.t2t'
 echo
 
 #get all items
-items="$(csg_property --file ${CSGSHARE}/xml/$xmlfile --path tags.item --print name --short)" || die "parsing xml failed"
+items="$(csg_property --file ${VOTCASHARE}/xml/$xmlfile --path tags.item --print name --short)" || die "parsing xml failed"
+
+#replace above command by:
+#perl -ne 'while (/<([^!].*?)>/g) {print "$1\n";}' settings.xml | perl -ne 'chomp;if (/^\/(.*)/) {print "$line\n";$line =~ s/\.$1$//;}else{$line.=".$_";};'
+
 #check if a head node is missing
 add_heads
 #sort them
@@ -74,7 +80,7 @@ for name in ${items}; do
   #cut the first 3 heads of the item
   cut_heads "$name"
   echo -n "${spaces}- target(${trunc}${name})(**${item}**) "
-  desc="$(csg_property --file ${CSGSHARE}/xml/$xmlfile --path tags.item --filter "name=$name" --print desc --short)" || die "${0##*/}: Could not get desc for $name"
+  desc="$(csg_property --file ${VOTCASHARE}/xml/$xmlfile --path tags.item --filter "name=$name" --print desc --short)" || die "${0##*/}: Could not get desc for $name"
   echo ${desc}
 done
 
