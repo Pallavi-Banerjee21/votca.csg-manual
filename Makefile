@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 #the next line is used by the buildutil !
-VER=1.2.4
+VER=1.3-dev
 HGID:=$(shell hg parents -R . --template "{node|short}" | sed 's/.*/\\newcommand{\\hgid}{${VER} (&)}/')
 LATEXMK=scripts/latexmk.pl
 LATEXMKOPTS=-e '$$latex=q/latex --halt-on-error %O %S/'
@@ -12,14 +12,15 @@ ps: $(NAME).ps
 
 $(NAME).tex: hgid.tex fig_submake functionality_submake reference_submake usage_submake
 
-#remove broken dvi if LATEXMK fails
-.DELETE_ON_ERROR: %.dvi
-
 %.dvi: %.tex dummy
-	$(LATEXMK) $(LATEXMKOPTS) -dvi $<
+	@#rm target if latexmk failed, worked better than DELETE_ON_ERROR
+	$(LATEXMK) $(LATEXMKOPTS) -dvi $< || rm -f $@
+	@#rm has exit code 0
+	@[ -f $@ ]
 
 %.pdf: %.dvi
-	dvipdf $< $@
+	dvipdf $< $*_shadow.pdf
+	mv $*_shadow.pdf $@
 
 %_submake:
 	$(MAKE) $(MFLAGS) -C $*
@@ -31,7 +32,7 @@ qclean:
 	$(LATEXMK) -C $(NAME).tex
 
 install: all
-	echo "$(NAME).pdf is ready to use, no need to install it."
+	@echo "$(NAME).pdf is ready to use, no need to install it."
 
 clean: qclean fig_subclean functionality_subclean reference_subclean usage_subclean
 	rm -f $(NAME).fdb_latexmk $(NAME).brf
@@ -47,5 +48,8 @@ tar: all
 hgid.tex: dummy
 	[ -f hgid.tex ] || touch hgid.tex
 	echo '$(HGID)' | cmp -s hgid.tex - || echo '$(HGID)' > hgid.tex
+
+upload-pdf: manual.pdf
+	googlesites_upload.py -d "/Documentation" -a manual.pdf
 
 dummy: ;
